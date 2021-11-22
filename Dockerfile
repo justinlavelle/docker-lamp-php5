@@ -19,7 +19,7 @@ RUN usermod -u ${BOOT2DOCKER_ID} www-data && \
     groupmod -g $(($BOOT2DOCKER_GID + 10000)) $(getent group $BOOT2DOCKER_GID | cut -d: -f1) && \
     groupmod -g ${BOOT2DOCKER_GID} staff
 
-# Install packages
+# Install packages for PHP
 ENV DEBIAN_FRONTEND noninteractive
 RUN add-apt-repository -y ppa:ondrej/php && \
     add-apt-repository -y ppa:ondrej/php5-compat && \
@@ -45,8 +45,18 @@ RUN add-apt-repository -y ppa:ondrej/php && \
         php5.6-gettext \
         php5.6-zip \
         php5.6-curl && \
-    apt-get -y autoremove && \
-    rm -rf /var/lib/apt/lists/*
+        # Webmin Dependencies
+        perl \
+        libnet-ssleay-perl \
+        openssl \ 
+        libauthen-pam-perl\
+        libpam-runtime \ 
+        libio-pty-perl \ 
+        apt-show-versions \ 
+        python\ 
+        apt-get -y autoremove && \
+        rm -rf /var/lib/apt/lists/*
+
 
 # Point CLI to use PHP 5.6
 RUN ln -sfn /usr/bin/php5.6 /etc/alternatives/php
@@ -74,6 +84,10 @@ RUN rm -rf /var/lib/mysql
 
 # mcrypt needed for phpMyAdmin
 RUN phpenmod mcrypt
+
+# Install Webmin
+RUN wget http://prdownloads.sourceforge.net/webadmin/webmin_1.981_all.deb \
+    dpkg --install webmin_1.981_all.deb
 
 # Install phpMyAdmin
 ENV PHPMYADMIN_VERSION=4.9.0.1
@@ -107,6 +121,6 @@ ADD app/ /app
 VOLUME  ["/etc/mysql", "/var/lib/mysql", "/app" ]
 
 # Expose Apache and MySQL
-EXPOSE 80 3306
+EXPOSE 80 3306 10000
 
 CMD ["/run.sh"]
